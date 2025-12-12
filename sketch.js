@@ -14,6 +14,8 @@ var tiempoTranscurrido = 0
 var bossActivo = false;
 var bossEnPantalla = false;
 var escenarioDetenido = false;
+var bazoocaEnPantalla = false;
+var limiteMovimiento = 0
 function preload() {
     bob_caminando = loadAnimation("./sprites/sprite_00.png", "./sprites/sprite_01.png", "./sprites/sprite_02.png", "./sprites/sprite_03.png", "./sprites/sprite_04.png", "./sprites/sprite_05.png", "./sprites/sprite_06.png", "./sprites/sprite_07.png", "./sprites/sprite_08.png", "./sprites/sprite_09.png", "./sprites/sprite_10.png", "./sprites/sprite_11.png", "./sprites/sprite_12.png", "./sprites/sprite_13.png", "./sprites/sprite_14.png", "./sprites/sprite_15.png", "./sprites/sprite_16.png", "./sprites/sprite_17.png", "./sprites/sprite_18.png", "./sprites/sprite_19.png");
     bob_quieto = loadAnimation("./sprites/sprite_00.png", "./sprites/sprite_01.png", "./sprites/sprite_02.png", "./sprites/sprite_03.png", "./sprites/sprite_04.png", "./sprites/sprite_05.png");
@@ -79,6 +81,7 @@ function setup() {
     crearMenuPrincipal();
     boss_tierra_grupo = new Group()
     enemigos_grupo = new Group()
+    bazooca_grupo = new Group()
     vidas = new Group()
     balas_grupo = new Group()
     for (let i = 0; i < corazones; i++) {
@@ -101,6 +104,7 @@ function setup() {
                }*/
     }
     bob.depth=2;
+    limiteMovimiento = width * 0.5
 }
 function draw() {
     if (game_status == 1 && !musica.isPlaying() && noMusic == false) {
@@ -123,15 +127,21 @@ function draw() {
             arbustos.forEach(a => a.velocity.x = 0);
             islas_grupo.forEach(i => i.velocity.x = 0);
             escenarioDetenido = true;
-            baz = createSprite(width *0.5, height*0.6)
-            baz.addImage(aceituna)
-            baz.depth = 3
-            baz.scale = 2.5
+            limiteMovimiento = width * 0.6
+            if(!bazoocaEnPantalla){
+                bazoocaEnPantalla = true
+                baz = createSprite(width *0.3, height*0.93)
+                baz.addImage(aceituna)
+                baz.depth = 5
+                baz.scale = 3
+                bazooca_grupo.add(baz)
+            }
         } else {
             escenarioDetenido = false;
         }
     }
     enemigos_grupo.collide(suelo, explotar);
+    bazooca_grupo.collide(bob, armar);
     bob.collide(suelo, dejardesaltar);
     bob.collide(bordes);
     bob.overlap(enemigos_grupo, destruir);
@@ -149,7 +159,7 @@ function draw() {
         }
         if (keyDown(RIGHT_ARROW)) {
             tiempoTranscurrido++
-            if (game_status == 1 && bob.x >= width * 0.5) {
+            if (game_status == 1 && bob.x >= limiteMovimiento) {
                 moverEscena(fondos)
                 moverEscena(arbustos)
                 moverExplosiones()
@@ -180,9 +190,8 @@ function draw() {
         if (!keyIsDown(LEFT_ARROW) && !keyIsDown(RIGHT_ARROW) && !bob.saltando && !bob.atacando) {
             bob.changeAnimation("quieto");
         }
-        if (keyWentDown("z") && !bob.atacando) {
+        if (keyWentDown("z") && bob.atacando) {
             bazooca()
-            bob.atacando = true
             bob.changeAnimation("atacar");
             bob.animation.changeFrame(0)
         }
@@ -389,4 +398,10 @@ function bazooca() {
     }
     bala.life = 60
     balas_grupo.add(bala)
+}
+function armar(bazooca, bob) {
+    bazooca.destroy()
+    bob.addAnimation("saltar", bob_atacando);
+    bob.atacando = true
+    bob.animation.frameDelay=2
 }
