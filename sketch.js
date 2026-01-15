@@ -16,6 +16,14 @@ var bossEnPantalla = false;
 var escenarioDetenido = false;
 var bazoocaEnPantalla = false;
 var limiteMovimiento = 0
+var bossVidaMax = 20;
+var bossVida = bossVidaMax;
+var bossBarraX = 50;
+var bossBarraY = 30;
+var bossBarraAncho = 400;
+var bossBarraAlto = 20;
+var bossDaño = 1;
+var boss = null;
 function preload() {
     bob_caminando = loadAnimation("./sprites/sprite_00.png", "./sprites/sprite_01.png", "./sprites/sprite_02.png", "./sprites/sprite_03.png", "./sprites/sprite_04.png", "./sprites/sprite_05.png", "./sprites/sprite_06.png", "./sprites/sprite_07.png", "./sprites/sprite_08.png", "./sprites/sprite_09.png", "./sprites/sprite_10.png", "./sprites/sprite_11.png", "./sprites/sprite_12.png", "./sprites/sprite_13.png", "./sprites/sprite_14.png", "./sprites/sprite_15.png", "./sprites/sprite_16.png", "./sprites/sprite_17.png", "./sprites/sprite_18.png", "./sprites/sprite_19.png");
     bob_quieto = loadAnimation("./sprites/sprite_00.png", "./sprites/sprite_01.png", "./sprites/sprite_02.png", "./sprites/sprite_03.png", "./sprites/sprite_04.png", "./sprites/sprite_05.png");
@@ -113,6 +121,7 @@ function draw() {
     }
     drawSprites()
     createEnemies()
+    dibujarVidaBoss()
     if(tiempoTranscurrido > 1000 && !bossActivo){
         bossActivo = true
         crearBoss()
@@ -145,9 +154,13 @@ function draw() {
     bob.collide(suelo, dejardesaltar);
     bob.collide(bordes);
     bob.overlap(enemigos_grupo, destruir);
+    balas_grupo.collide(enemigos_grupo,daño_disparo_enemigo)
     bob.collide(islas_grupo, dejardesaltar);
     bob.overlap(btnStart, start);
     bob.overlap(btnSponsor, mostrarSponsors);
+    if (boss !== undefined && boss !== null && !boss.removed){
+        balas_grupo.overlap(boss,daño_disparo_boss)
+    }
     if (perdiste == false) {
         bob.velocityY = 5;
         if (keyDown(LEFT_ARROW)) {
@@ -403,5 +416,42 @@ function armar(bazooca, bob) {
     bazooca.destroy()
     bob.addAnimation("saltar", bob_atacando);
     bob.atacando = true
-    bob.animation.frameDelay=2
+    bob.animation.frameDelay=2 
+}
+function daño_disparo_enemigo(bala, enemigo) {
+    bala.destroy()
+    enemigo.destroy()
+}
+function dibujarVidaBoss() {
+    if (!bossActivo || !bossEnPantalla || !boss) return;
+    push();
+    noStroke();
+
+    fill(100);
+    rect(bossBarraX, bossBarraY, bossBarraAncho, bossBarraAlto);
+
+    let anchoVida = map(bossVida, 0, bossVidaMax, 0, bossBarraAncho);
+
+    if (bossVida > bossVidaMax * 0.5) fill("green");
+    else if (bossVida > bossVidaMax * 0.25) fill("orange");
+    else fill("red");
+
+    rect(bossBarraX, bossBarraY, anchoVida, bossBarraAlto);
+
+    noFill();
+    stroke("black");
+    rect(bossBarraX, bossBarraY, bossBarraAncho, bossBarraAlto);
+
+    pop();
+}
+function daño_disparo_boss(bala, boss) {
+    bala.destroy();
+    bossVida -= bossDaño;
+    boss.tint = color(255, 0, 0);
+    setTimeout(() => boss.tint = color(255), 100);
+    if (bossVida <= 0) {
+        boss.remove();
+        bossActivo = false;
+        bossEnPantalla = false;
+    }
 }
